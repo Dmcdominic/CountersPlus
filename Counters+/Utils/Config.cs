@@ -8,12 +8,15 @@ using IniParser.Model;
 using System.Linq;
 using CountersPlus.Utils;
 using IPA.Utilities;
+using LibConf;
+using LibConf.Providers;
 
 namespace CountersPlus.Config
 {
     public class ConfigLoader
     {
-        internal static BS_Utils.Utilities.Config config = new BS_Utils.Utilities.Config("CountersPlus"); //Conflicts with CountersPlus.Config POG
+        internal static IConfigProvider config = Conf.CreateConfig(BeatSaber.UserDataPath, "CountersPlus");
+        //internal static BS_Utils.Utilities.Config config = new BS_Utils.Utilities.Config("CountersPlus"); //Conflicts with CountersPlus.Config POG
         /// <summary>
         /// Load Counters+ settings from config.
         /// Automatically generates any missing settings with their defaults found in the ConfigDefaults class.
@@ -36,6 +39,7 @@ namespace CountersPlus.Config
                 model.pbConfig = DeserializeFromConfig(model.pbConfig, model.pbConfig.DisplayName) as PBConfigModel;
                 model.notesLeftConfig = DeserializeFromConfig(model.notesLeftConfig, model.notesLeftConfig.DisplayName) as NotesLeftConfigModel;
                 model.failsConfig = DeserializeFromConfig(model.failsConfig, model.failsConfig.DisplayName) as FailConfigModel;
+                config.Save();
             }
             catch (Exception e)
             {
@@ -79,7 +83,7 @@ namespace CountersPlus.Config
             {
                 if (info.MemberType != MemberTypes.Field || info.Name.ToLower().Contains("config")) continue;
                 FieldInfo finfo = (FieldInfo)info;
-                string value = config.GetString(DisplayName, info.Name, null);
+                string value = config.GetString($"{DisplayName}_{info.Name}", null);
                 if (value == null)
                 {
                     if (type.Name.Contains("Main")) value = finfo.GetValue(ConfigDefaults.MainDefaults).ToString();
@@ -137,7 +141,7 @@ namespace CountersPlus.Config
                 {
                     FieldInfo finfo = (FieldInfo)info;
                     if (finfo.Name.ToLower().Contains("config")) continue;
-                    ConfigLoader.config.SetString(DisplayName, info.Name, finfo.GetValue(this).ToString());
+                    ConfigLoader.config.SetString($"{DisplayName}_{info.Name}", finfo.GetValue(this).ToString());
                 }
             }
         }
@@ -166,7 +170,7 @@ namespace CountersPlus.Config
             {
                 if (info.MemberType != MemberTypes.Field) continue;
                 FieldInfo finfo = (FieldInfo)info;
-                ConfigLoader.config.SetString(DisplayName, info.Name, finfo.GetValue(this).ToString());
+                ConfigLoader.config.SetString($"{DisplayName}_{info.Name}", finfo.GetValue(this).ToString());
             }
         }
     }
