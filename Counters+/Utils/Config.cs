@@ -39,12 +39,11 @@ namespace CountersPlus.Config
                 model.pbConfig = DeserializeFromConfig(model.pbConfig, model.pbConfig.DisplayName) as PBConfigModel;
                 model.notesLeftConfig = DeserializeFromConfig(model.notesLeftConfig, model.notesLeftConfig.DisplayName) as NotesLeftConfigModel;
                 model.failsConfig = DeserializeFromConfig(model.failsConfig, model.failsConfig.DisplayName) as FailConfigModel;
-                config.Save();
             }
             catch (Exception e)
             {
                 if (e.GetType() != typeof(NullReferenceException)) Plugin.Log(e.ToString(), LogInfo.Error);
-            }
+            };
             Plugin.Log("Config loaded!", LogInfo.Notice);
             return model;
         }
@@ -83,7 +82,7 @@ namespace CountersPlus.Config
             {
                 if (info.MemberType != MemberTypes.Field || info.Name.ToLower().Contains("config")) continue;
                 FieldInfo finfo = (FieldInfo)info;
-                string value = config.GetString($"{DisplayName}_{info.Name}", null);
+                string value = config.GetString(DisplayName, info.Name, null);
                 if (value == null)
                 {
                     if (type.Name.Contains("Main")) value = finfo.GetValue(ConfigDefaults.MainDefaults).ToString();
@@ -141,7 +140,7 @@ namespace CountersPlus.Config
                 {
                     FieldInfo finfo = (FieldInfo)info;
                     if (finfo.Name.ToLower().Contains("config")) continue;
-                    ConfigLoader.config.SetString($"{DisplayName}_{info.Name}", finfo.GetValue(this).ToString());
+                    ConfigLoader.config.SetString(DisplayName, info.Name, finfo.GetValue(this).ToString(), true);
                 }
             }
         }
@@ -170,7 +169,7 @@ namespace CountersPlus.Config
             {
                 if (info.MemberType != MemberTypes.Field) continue;
                 FieldInfo finfo = (FieldInfo)info;
-                ConfigLoader.config.SetString($"{DisplayName}_{info.Name}", finfo.GetValue(this).ToString());
+                ConfigLoader.config.SetString(DisplayName, info.Name, finfo.GetValue(this).ToString(), true);
             }
         }
     }

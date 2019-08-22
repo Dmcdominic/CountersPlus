@@ -127,7 +127,7 @@ namespace CountersPlus.Custom
         internal string ModCreator;
         internal bool IsNew = false;
         internal ICounterPositions[] RestrictedPositions { get {
-                string doodads = ConfigLoader.config.GetString($"{DisplayName}_RestrictedPositions", "All");
+                string doodads = ConfigLoader.config.GetString(DisplayName, "RestrictedPositions", "All");
                 if (doodads == "All") return new ICounterPositions[] { };
                 List<ICounterPositions> restricted = new List<ICounterPositions>();
                 foreach(string position in doodads.Split(','))
@@ -138,10 +138,10 @@ namespace CountersPlus.Custom
                 {
                     string combined = string.Join(",", value);
                     if (combined.Length == 0) combined = "All";
-                    ConfigLoader.config.SetString($"{DisplayName}_RestrictedPositions", combined);
+                    ConfigLoader.config.SetString(DisplayName, "RestrictedPositions", combined, true);
                 }
                 catch {
-                    ConfigLoader.config.SetString($"{DisplayName}_RestrictedPositions", "All");
+                    ConfigLoader.config.SetString(DisplayName, "RestrictedPositions", "All", true);
                 }
             } }
     }
