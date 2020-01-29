@@ -72,8 +72,9 @@ namespace CountersPlus.Counters
         {
             try
             {
-                if (PluginUtility.IsPluginPresent("CustomMissText"))
-                    label.text = String.Join(" ", CustomMissText.Plugin.allEntries[UnityEngine.Random.Range(0, CustomMissText.Plugin.allEntries.Count)]);
+                // Couldn't find anywhere to download CustomMissText so this is the easiest way to get rid of the compiler errors
+                //if (PluginUtility.IsPluginPresent("CustomMissText"))
+                //    label.text = String.Join(" ", CustomMissText.Plugin.allEntries[UnityEngine.Random.Range(0, CustomMissText.Plugin.allEntries.Count)]);
             }
             catch { }
         }
