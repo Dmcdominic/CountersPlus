@@ -78,6 +78,7 @@ namespace CountersPlus
             Plugin.Log("Loading Counters...", LogInfo.Notice);
             LoadCounter<MissedConfigModel, MissedCounter>(settings.missedConfig);
             LoadCounter<NoteConfigModel, AccuracyCounter>(settings.noteConfig);
+            LoadCounter<InhibitoryConfigModel, InhibitoryCounter>(settings.inhibitoryConfig);
             LoadCounter<ScoreConfigModel, ScoreCounter>(settings.scoreConfig);
             LoadCounter<PBConfigModel, PBCounter>(settings.pbConfig);
             LoadCounter<ProgressConfigModel, ProgressCounter>(settings.progressConfig);

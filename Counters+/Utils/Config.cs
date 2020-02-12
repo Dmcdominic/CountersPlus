@@ -30,6 +30,7 @@ namespace CountersPlus.Config
                 model.hudConfig = DeserializeFromConfig(model.hudConfig, model.hudConfig.DisplayName);
                 model.missedConfig = DeserializeFromConfig(model.missedConfig, model.missedConfig.DisplayName);
                 model.noteConfig = DeserializeFromConfig(model.noteConfig, model.noteConfig.DisplayName);
+                model.inhibitoryConfig = DeserializeFromConfig(model.inhibitoryConfig, model.inhibitoryConfig.DisplayName);
                 model.progressConfig = DeserializeFromConfig(model.progressConfig, model.progressConfig.DisplayName);
                 model.scoreConfig = DeserializeFromConfig(model.scoreConfig, model.scoreConfig.DisplayName);
                 model.speedConfig = DeserializeFromConfig(model.speedConfig, model.speedConfig.DisplayName);
@@ -111,6 +112,7 @@ namespace CountersPlus.Config
         public HUDConfigModel hudConfig = new HUDConfigModel();
         public MissedConfigModel missedConfig = new MissedConfigModel();
         public NoteConfigModel noteConfig = new NoteConfigModel();
+        public InhibitoryConfigModel inhibitoryConfig = new InhibitoryConfigModel();
         public ProgressConfigModel progressConfig = new ProgressConfigModel();
         public ScoreConfigModel scoreConfig = new ScoreConfigModel();
         public PBConfigModel pbConfig = new PBConfigModel();
@@ -196,6 +198,16 @@ namespace CountersPlus.Config
     public sealed class NoteConfigModel : ConfigModel {
         public NoteConfigModel() { DisplayName = "Notes"; VersionAdded = new SemVer.Version("1.0.0");
             Enabled = false; Position = ICounterPositions.BelowCombo; Distance = 1; } //Default values
+        public bool ShowPercentage = false;
+        public int DecimalPrecision = 2;
+    }
+
+    // Our config model class for inbitory data display settings
+    public sealed class InhibitoryConfigModel : ConfigModel {
+        public InhibitoryConfigModel() {
+            DisplayName = "Inhibitory"; VersionAdded = new SemVer.Version("1.9.0");
+            Enabled = false; Position = ICounterPositions.BelowCombo; Distance = 1;
+        } //Default values
         public bool ShowPercentage = false;
         public int DecimalPrecision = 2;
     }
