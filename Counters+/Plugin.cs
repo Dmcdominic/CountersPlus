@@ -42,7 +42,11 @@ namespace CountersPlus
                 Log($"{ex.Message}", LogInfo.Fatal, "Unable to apply Harmony patches. Did you even install BSIPA correctly?");
             }
 
+            Log($"OnLoad() now getting called for CountersController");
             CountersController.OnLoad();
+            Log($"OnLoad() now getting called for InhibitoryDataSaving");
+            InhibitoryDataSaving.OnLoad();
+            Log($"Both OnLoad() calls returned");
             MenuUI.CreateUI();
         }
 
