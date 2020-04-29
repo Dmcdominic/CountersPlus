@@ -1,17 +1,21 @@
 ﻿using CountersPlus.UI;
-using Harmony;
+using CountersPlus.Harmony;
 using IPA;
 using IPA.Loader;
 using System;
 using System.Linq;
 using UnityEngine.SceneManagement;
+using UnityEngine;
 using IPALogger = IPA.Logging.Logger;
 using CountersPlus.Utils;
+using System.Reflection;
+using Harmony;
 
 namespace CountersPlus
 {
     public enum LogInfo { Info, Warning, Notice, Error, Fatal };
-    public class Plugin : IBeatSaberPlugin
+    [Plugin(RuntimeOptions.SingleStartInit)]
+    public class Plugin
     {
         public static SemVer.Version PluginVersion { get; private set; } = new SemVer.Version("0.0.0"); //Default.
         public static SemVer.Version WebVersion { get; internal set; } = new SemVer.Version("0.0.0"); //Default.
@@ -24,9 +28,10 @@ namespace CountersPlus
         private static HarmonyInstance harmonyInstance;
         public const string harmonyId = "com.caeden117.beatsaber.countersplus";
 
-        public void Init(IPALogger log, PluginLoader.PluginMetadata metadata)
+        
+        public void Init(IPALogger log, PluginMetadata metadata)
         {
-            Logger.Init(log);   
+            Utils.Logger.Init(log);   
             PluginVersion = metadata?.Version;
         }
 
@@ -48,6 +53,23 @@ namespace CountersPlus
             InhibitoryDataSaving.OnLoad();
             Log($"Both OnLoad() calls returned");
             MenuUI.CreateUI();
+            MethodInfo handleCut = typeof(GameNoteController).GetMethod("HandleCut", BindingFlags.Instance | BindingFlags.NonPublic);
+            var prefix = typeof(Plugin).GetMethod("PreCut", BindingFlags.Static | BindingFlags.Public);
+            var postfix = typeof(Plugin).GetMethod("PostCut", BindingFlags.Static | BindingFlags.Public);
+            
+
+            
+            harmonyInstance.Patch(handleCut, new HarmonyMethod(prefix), new HarmonyMethod((postfix)));
+
+        }
+        public static void PreCut(Saber saber,Vector3 cutPoint,Quaternion orientation,Vector3 cutDirVec,bool allowBadCut)
+        {
+            cutDirVec *= -1;
+        }
+
+        public static void PostCut()
+        {
+            
         }
 
         public void OnApplicationQuit()
@@ -58,11 +80,7 @@ namespace CountersPlus
         public void OnActiveSceneChanged(Scene arg0, Scene arg1)
         {
             if (arg1.name == "GameCore" &&
-                CountersController.settings.Enabled &&
-                (!UnityEngine.Resources.FindObjectsOfTypeAll<PlayerDataModelSO>()
-                    .FirstOrDefault()?
-                    .playerData.playerSpecificSettings.noTextsAndHuds ?? true)
-                ) CountersController.LoadCounters();
+                CountersController.settings.Enabled ) CountersController.LoadCounters();
             CountersController.LoadedCounters.Clear();
         }
 
@@ -73,7 +91,7 @@ namespace CountersPlus
         public void OnFixedUpdate() { }
         public static void Log(string m, LogInfo l = LogInfo.Info, string suggestedAction = null)
         {
-            Logger.Log(m, l, suggestedAction);
+            Utils.Logger.Log(m, l, suggestedAction);
         }
     }
 }
