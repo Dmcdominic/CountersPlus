@@ -17,11 +17,11 @@ namespace CountersPlus.Counters
 
         internal override void Counter_Start() { }
 
-        internal override void Init(CountersData data)
+        internal override void Init(CountersData data, Vector3 textPosition)
         {
             scoreController = data.ScoreController;
-            Vector3 position = CountersController.DeterminePosition(gameObject, settings.Position, settings.Distance);
-            TextHelper.CreateText(out inhibitedText, position - new Vector3(0, 0.4f, 0));
+            //Vector3 position = CountersController.DeterminePosition(gameObject, settings.Position, settings.Distance);
+            TextHelper.CreateText(out inhibitedText, textPosition - new Vector3(0, 0.4f, 0));
             inhibitedText.text = settings.ShowPercentage ? "0 / 0 - (100%)" : "0 / 0";
             inhibitedText.fontSize = 4;
             inhibitedText.color = Color.white;
@@ -29,7 +29,7 @@ namespace CountersPlus.Counters
 
             GameObject labelGO = new GameObject("Counters+ | Notes Label");
             labelGO.transform.parent = transform;
-            TextHelper.CreateText(out TMP_Text label, position);
+            TextHelper.CreateText(out TMP_Text label, textPosition);
             label.text = "Notes";
             label.fontSize = 3;
             label.color = Color.white;
