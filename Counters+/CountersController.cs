@@ -50,27 +50,31 @@ namespace CountersPlus
         private IEnumerator ObtainRequiredData()
         {
             Plugin.Log("Obtaining required counter data...");
-            yield return new WaitUntil(() => Resources.FindObjectsOfTypeAll<ScoreController>().Any());
+            yield return new WaitUntil(() => Resources.FindObjectsOfTypeAll<BeatmapObjectManager>().Any());
             yield return new WaitUntil(() => Resources.FindObjectsOfTypeAll<PlayerController>().Any());
             yield return new WaitUntil(() => Resources.FindObjectsOfTypeAll<AudioTimeSyncController>().Any());
             CountersData data = new CountersData();
             ReadyToInit.Invoke(data);
             Plugin.Log("Obtained data!");
-            if (settings.HideCombo) HideUIElement("Combo");
-            if (settings.HideMultiplier) HideUIElement("Multiplier");
+            if (settings.HideCombo) HideUIElementWithComponent<ComboUIController>();
+            if (settings.HideMultiplier) HideUIElementWithComponent<ScoreMultiplierUIController>();
         }
 
-        private void HideUIElement(string Name)
+        private void HideUIElementWithComponent<T>() where T : MonoBehaviour
         {
-            try
+            GameObject gameObject = (Resources.FindObjectsOfTypeAll<T>().FirstOrDefault() as MonoBehaviour).gameObject;
+            if (gameObject != null && gameObject.activeInHierarchy)
+                RecurseFunctionOverGameObjectTree(gameObject, (child) => child.SetActive(false));
+            else Plugin.Log($"Can't remove a GameObject with the attached component {typeof(T).Name}!", LogInfo.Warning);
+        }
+
+        private void RecurseFunctionOverGameObjectTree(GameObject go, Action<GameObject> func)
+        {
+            foreach (Transform child in go.transform)
             {
-                for (int i = 0; i < GameObject.Find($"{Name}Panel").transform.childCount; i++)
-                {
-                    GameObject child = GameObject.Find($"{Name}Panel").transform.GetChild(i).gameObject;
-                    if (child.name != "BG") child.SetActive(false);
-                }
+                RecurseFunctionOverGameObjectTree(child.gameObject, func);
+                func?.Invoke(go);
             }
-            catch { Plugin.Log($"Can't remove the {Name} counter!", LogInfo.Warning); }
         }
 
         public static void LoadCounters()
@@ -107,17 +111,17 @@ namespace CountersPlus
             switch (position)
             {
                 case ICounterPositions.BelowCombo:
-                    pos = new Vector3(-X, 1.05f - settings.ComboOffset, 7);
+                    pos = new Vector3(-X, 1.15f - settings.ComboOffset, 7);
                     break;
                 case ICounterPositions.AboveCombo:
-                    pos = new Vector3(-X, 1.9f + settings.ComboOffset, 7);
+                    pos = new Vector3(-X, 2f + settings.ComboOffset, 7);
                     offset = new Vector3(0, (offset.y * -1) + 0.75f, 0);
                     break;
                 case ICounterPositions.BelowMultiplier:
-                    pos = new Vector3(X, 0.95f - settings.MultiplierOffset, 7);
+                    pos = new Vector3(X, 1.05f - settings.MultiplierOffset, 7);
                     break;
                 case ICounterPositions.AboveMultiplier:
-                    pos = new Vector3(X, 1.9f + settings.MultiplierOffset, 7);
+                    pos = new Vector3(X, 2f + settings.MultiplierOffset, 7);
                     offset = new Vector3(0, (offset.y * -1) + 0.75f, 0);
                     break;
                 case ICounterPositions.BelowEnergy:
@@ -136,21 +140,25 @@ namespace CountersPlus
 
     public class CountersData
     {
+        public BeatmapObjectManager BOM;
         public ScoreController ScoreController;
         public PlayerController PlayerController;
         public AudioTimeSyncController AudioTimeSyncController;
-        public PlayerDataModelSO PlayerData;
+        public PlayerDataModel PlayerData;
         public GameplayModifiersModelSO ModifiersData;
         public GameplayCoreSceneSetupData GCSSD;
+        public bool Is360Or90Level = false;
 
         public CountersData()
         {
+            BOM = Resources.FindObjectsOfTypeAll<BeatmapObjectManager>().First();
             ScoreController = Resources.FindObjectsOfTypeAll<ScoreController>().First();
             PlayerController = Resources.FindObjectsOfTypeAll<PlayerController>().First();
             AudioTimeSyncController = Resources.FindObjectsOfTypeAll<AudioTimeSyncController>().First();
-            PlayerData = Resources.FindObjectsOfTypeAll<PlayerDataModelSO>().First();
+            PlayerData = Resources.FindObjectsOfTypeAll<PlayerDataModel>().First();
             ModifiersData = Resources.FindObjectsOfTypeAll<GameplayModifiersModelSO>().First();
             GCSSD = BS_Utils.Plugin.LevelData.GameplayCoreSceneSetupData; //By the time all of these load, so should GCSSD.
+            Is360Or90Level = Resources.FindObjectsOfTypeAll<FlyingGameHUDRotation>().Any(x => x.isActiveAndEnabled);
         }
     }
 }

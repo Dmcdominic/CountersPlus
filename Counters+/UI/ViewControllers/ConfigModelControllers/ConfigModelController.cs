@@ -15,6 +15,8 @@ namespace CountersPlus.UI.ViewControllers.ConfigModelControllers
 {
     public class ConfigModelController : MonoBehaviour
     {
+        private static List<ConfigModelController> loadedConfigModelControllers = new List<ConfigModelController>();
+
         private string baseConfigLocation => Utilities.GetResourceContent(Assembly.GetAssembly(GetType()),
             "CountersPlus.UI.BSML.SettingsBase.bsml");
 
@@ -55,6 +57,7 @@ namespace CountersPlus.UI.ViewControllers.ConfigModelControllers
                 controller.ModelSpecificController.SetPrivateField("parentController", controller);
             }
             controller.Apply();
+            loadedConfigModelControllers.Add(controller);
             return controller;
         }
 
@@ -67,7 +70,11 @@ namespace CountersPlus.UI.ViewControllers.ConfigModelControllers
             ConfigModelController controller = controllerGO.AddComponent<ConfigModelController>();
             controller.ConfigModel = model;
             if (controllerType != null)
-                controller.ModelSpecificController = controllerGO.AddComponent(controllerType);
+            {
+                if (FindObjectOfType(controllerType))
+                    controller.ModelSpecificController = FindObjectOfType(controllerType) as Component;
+                else controller.ModelSpecificController = controllerGO.AddComponent(controllerType);
+            }
             if (addBaseSettings)
                 BSMLParser.instance.Parse(controller.baseConfigLocation, baseTransform, controller);
             try
@@ -81,6 +88,7 @@ namespace CountersPlus.UI.ViewControllers.ConfigModelControllers
                     LogInfo.Error,
                     "Report this issue to the mod author who created this Custom Counter, rather than to Counters+ itself.");
             }
+            loadedConfigModelControllers.Add(controller);
             return controller;
         }
 
@@ -96,12 +104,28 @@ namespace CountersPlus.UI.ViewControllers.ConfigModelControllers
         private void OnDestroy()
         {
             ConfigModel?.Save();
+            loadedConfigModelControllers.Remove(this);
+        }
+
+        public static void ClearAllControllers()
+        {
+            //Make a new copy to prevent enumeration modification
+            List<ConfigModelController> cached = new List<ConfigModelController>(loadedConfigModelControllers);
+            foreach (ConfigModelController controller in cached)
+            {
+                if (controller != null)
+                {
+                    Destroy(controller.gameObject);
+                }
+                loadedConfigModelControllers.Remove(controller);
+            }
+            loadedConfigModelControllers.Clear();
         }
 
         [UIAction("update_model")]
         internal void ConfigChanged(object obj)
         {
-            StartCoroutine(DelayedMockCounterUpdate(ConfigModel));
+            if (gameObject.activeInHierarchy) StartCoroutine(DelayedMockCounterUpdate(ConfigModel));
         }
 
         private IEnumerator DelayedMockCounterUpdate<T>(T settings) where T : ConfigModel

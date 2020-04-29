@@ -1,5 +1,4 @@
 ﻿using CountersPlus.UI;
-using CountersPlus.Harmony;
 using IPA;
 using IPA.Loader;
 using System;

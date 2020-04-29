@@ -10,6 +10,15 @@ namespace CountersPlus.UI.ViewControllers.ConfigModelControllers
     {
         public ConfigModelController parentController;
 
+        [UIObject("aprilfools")] private GameObject aprilFools;
+
+        [UIValue("april-fools")]
+        public bool AprilFoolsTomfoolery
+        {
+            get => CountersController.settings.AprilFoolsTomfoolery;
+            set => CountersController.settings.AprilFoolsTomfoolery = value;
+        }
+
         [UIValue("enabled")]
         public bool Enabled
         {
@@ -57,10 +66,16 @@ namespace CountersPlus.UI.ViewControllers.ConfigModelControllers
             set => CountersController.settings.HideMultiplier = value;
         }
 
+        private void Start()
+        {
+            System.DateTime date = System.DateTime.Now;
+            aprilFools.SetActive(date.Month == 4 && date.Day == 1);
+        }
+
         [UIAction("update_model")]
         internal void UpdateMocksAndSaveModel(object obj)
         {
-            StartCoroutine(WaitThenUpdate());
+            if (gameObject.activeInHierarchy) StartCoroutine(WaitThenUpdate());
         }
 
         private IEnumerator WaitThenUpdate()
