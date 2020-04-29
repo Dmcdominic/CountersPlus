@@ -23,7 +23,8 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
-    <NoWarn>CS0649</NoWarn>
+    <NoWarn>CS0649,CS1591</NoWarn>
+    <DocumentationFile>bin\Debug\Counters+.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -36,35 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\0Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="0Harmony.1.2.0.1">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Libs\0Harmony.1.2.0.1.dll</HintPath>
-    </Reference>
-    <Reference Include="Accessibility" />
-    <Reference Include="BeatSaberCustomUI">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Beat Saber\Plugins\BeatSaberCustomUI.dll</HintPath>
-    </Reference>
-    <Reference Include="BeatSaverDownloader">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Beat Saber\Plugins\BeatSaverDownloader.dll</HintPath>
-    </Reference>
-    <Reference Include="Cinemachine">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\Cinemachine.dll</HintPath>
-    </Reference>
-    <Reference Include="CustomAvatar">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Beat Saber\Plugins\CustomAvatar.dll</HintPath>
-    </Reference>
-    <Reference Include="CustomPlatforms">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Beat Saber\Plugins\CustomPlatforms.dll</HintPath>
-    </Reference>
-    <Reference Include="CustomSaber">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Beat Saber\Plugins\CustomSaber.dll</HintPath>
-    </Reference>
-    <Reference Include="DynamicBone">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\DynamicBone.dll</HintPath>
-    </Reference>
-    <Reference Include="FinalIK">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\FinalIK.dll</HintPath>
+      <HintPath>$(BeatSaberDir)\Libs\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="HMUI">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\HMUI.dll</HintPath>
@@ -107,48 +80,11 @@
     <Reference Include="LIV">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\LIV.dll</HintPath>
     </Reference>
-    <Reference Include="MainAssembly, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\MainAssembly.dll</HintPath>
+    <Reference Include="Main">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Main.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.Cecil.0.10.4.0">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Libs\Mono.Cecil.0.10.4.0.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Mdb.0.10.4.0">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Libs\Mono.Cecil.Mdb.0.10.4.0.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Pdb.0.10.4.0">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Libs\Mono.Cecil.Pdb.0.10.4.0.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Rocks.0.10.4.0">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Libs\Mono.Cecil.Rocks.0.10.4.0.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Data.Sqlite">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\Mono.Data.Sqlite.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Posix">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\Mono.Posix.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Security">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\Mono.Security.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.WebBrowser">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\Mono.WebBrowser.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json.12.0.0.0">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Libs\Newtonsoft.Json.12.0.0.0.dll</HintPath>
-    </Reference>
-    <Reference Include="ScoreSaber">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Beat Saber\Plugins\ScoreSaber.dll</HintPath>
-    </Reference>
-    <Reference Include="SemVer.1.2.0.0">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Libs\SemVer.1.2.0.0.dll</HintPath>
-    </Reference>
-    <Reference Include="SongBrowserPlugin">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Beat Saber\Plugins\SongBrowserPlugin.dll</HintPath>
-    </Reference>
-    <Reference Include="SongLoaderPlugin">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Beat Saber\Plugins\SongLoaderPlugin.dll</HintPath>
+    <Reference Include="SemVer">
+      <HintPath>$(BeatSaberDir)\Libs\SemVer.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -406,7 +342,7 @@
     <Compile Include="Custom\Attributes\DisplayNameAttribute.cs" />
     <Compile Include="Custom\Attributes\FormattedTextAttribute.cs" />
     <Compile Include="Custom\Attributes\RefreshCounterAttribute.cs" />
-    <Compile Include="Harmony\ScoreCounterHook.cs" />
+    <Compile Include="Harmony Patches\ScoreCounterHook.cs" />
     <Compile Include="UI\AdvancedCounterSettings.cs" />
     <Compile Include="UI\CounterWarning.cs" />
     <Compile Include="UI\Images\Images.cs" />
@@ -451,6 +387,7 @@
     <Compile Include="Utils\InhibitoryDataSaving.cs" />
     <Compile Include="Utils\DataSavingUtil.cs" />
     <Compile Include="Utils\Logger.cs" />
+    <Compile Include="Utils\OopsAllAprilFools.cs" />
     <Compile Include="Utils\PluginUtility.cs" />
     <Compile Include="Utils\ReflectionUtil.cs" />
     <Compile Include="Counters\ScoreCounter.cs" />
@@ -544,6 +481,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Plugins\CountersPlus.dll"</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetDir)$(SolutionName).dll" "$(BeatSaberDir)\Plugins\CountersPlus.dll"
+copy "$(TargetDir)$(SolutionName).xml" "$(BeatSaberDir)\Plugins\CountersPlus.xml"</PostBuildEvent>
   </PropertyGroup>
 </Project>

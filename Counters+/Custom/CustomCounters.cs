@@ -17,8 +17,8 @@ namespace CountersPlus.Custom
 
         /// <summary>
         /// Adds an outside MonoBehaviour into the Counters+ system.
-        /// <param name="model"/>The CustomCounter object.</param>
-        /// <param name="restrictedPositions">Restrict your Custom Counter to any of these positions. Inputting no parameters would allow the Counter to use all that are available.</param>
+        /// <param name="model"/>The CustomCounter object.
+        /// <param name="restrictedPositions"/>Restrict your Custom Counter to any of these positions. Inputting no parameters would allow the Counter to use all that are available.
         /// </summary>
         public static void Create<T>(T model, params ICounterPositions[] restrictedPositions) where T : CustomCounter
         {
@@ -27,8 +27,8 @@ namespace CountersPlus.Custom
 
         /// <summary>
         /// Adds an outside MonoBehaviour into the Counters+ system.
-        /// <param name="model"/>The CustomCounter object.</param>
-        /// <param name="restrictedPositions">Restrict your Custom Counter to any of these positions. Inputting no parameters would allow the Counter to use all that are available.</param>
+        /// <param name="model"/>The CustomCounter object.
+        /// <param name="defaults"/>A <see cref="CustomConfigModel"/> that contains your default settings.
         /// </summary>
         public static void Create<T>(T model, CustomConfigModel defaults = null) where T : CustomCounter
         {
@@ -37,7 +37,7 @@ namespace CountersPlus.Custom
 
         /// <summary>
         /// Adds an outside MonoBehaviour into the Counters+ system.
-        /// <param name="model"/>The CustomCounter object.</param>
+        /// <param name="model"/>The CustomCounter object.
         /// <param name="defaults">Default configuration options for your custom counter.</param>
         /// <param name="restrictedPositions">Restrict your Custom Counter to any of these positions. Inputting no parameters would allow the Counter to use all that are available.</param>
         /// </summary>
@@ -53,8 +53,7 @@ namespace CountersPlus.Custom
 
             if (model.BSIPAMod != null)
             {
-                PluginLoader.PluginMetadata pluginMetadata = PluginUtility.GetPluginMetadata(model.BSIPAMod);
-                if (pluginMetadata != null) modCreator = pluginMetadata.Name;
+                modCreator = model.BSIPAMod.Name;
             }
             model.ModName = modCreator;
 
@@ -105,7 +104,7 @@ namespace CountersPlus.Custom
         /// <summary>
         /// The plugin that created this custom counter. Will be displayed in the Settings UI.
         /// </summary>
-        public IPA.IBeatSaberPlugin BSIPAMod;
+        public PluginMetadata BSIPAMod;
         /// <summary>
         /// The name of the <see cref="GameObject"/> that holds the <see cref="Canvas"/> that contains all the text for the counter.
         /// </summary>
