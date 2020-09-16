@@ -1,126 +1,103 @@
-﻿using System;
-using System.Collections;
+﻿using CountersPlus.ConfigModels;
+using System;
 using System.Linq;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
-using CountersPlus.Config;
+using Zenject;
+using static CountersPlus.Utils.Accessors;
 
 namespace CountersPlus.Counters
 {
-    public class ProgressCounter : Counter<ProgressConfigModel>
+    internal class ProgressCounter : Counter<ProgressConfigModel>, ITickable
     {
+        private readonly Vector3 ringSize = Vector3.one * 1.175f;
+        private readonly string multiplierImageSpriteName = "Circle";
 
-        TMP_Text _timeMesh;
-        AudioTimeSyncController _audioTimeSync;
-        Image _image;
+        [Inject] private AudioTimeSyncController atsc;
+        [Inject(Optional = true)] private CoreGameHUDController coreGameHUD; // For getting multiplier image
+        [Inject] private GameplayCoreSceneSetupData gcssd; // I hope this works
 
-        bool useTimeLeft = false;
-        float t = 0;
-        float length = 0;
-        internal override void Counter_Start()
+        private TMP_Text timeText;
+        private Image progressRing;
+        private float length = 0;
+        private float songBPM = 100;
+
+        public override void CounterInit()
         {
-            useTimeLeft = settings.ProgressTimeLeft;
-            if (settings.Mode == ICounterMode.BaseGame && gameObject.name != "SongProgressCanvas")
-                StartCoroutine(YeetToBaseCounter());
-        }
-        internal override void Counter_Destroy() { }
+            timeText = CanvasUtility.CreateTextFromSettings(Settings);
+            timeText.fontSize = 4;
 
-        IEnumerator YeetToBaseCounter()
-        {
-            yield return new WaitUntil(() => GameObject.Find("SongProgressCanvas") != null);
-            GameObject.Find("SongProgressCanvas").transform.position = CountersController.DeterminePosition(gameObject, settings.Position, settings.Distance);
-            Destroy(gameObject);
-        }
+            length = atsc.songLength;
+            songBPM = gcssd.difficultyBeatmap.level.beatsPerMinute;
 
-        internal override void Init(CountersData data, Vector3 position)
-        {
-            _audioTimeSync = data.AudioTimeSyncController;
-            length = _audioTimeSync.songLength;
-            if (settings.Mode == ICounterMode.Original)
+            if (coreGameHUD != null)
             {
-                TextHelper.CreateText(out _timeMesh, position + new Vector3(-0.25f, 0.25f, 0));
-                _timeMesh.text = settings.ProgressTimeLeft ? $"{Math.Floor(length / 60):N0}:{Math.Floor(length % 60):00}" : "0:00";
-                _timeMesh.fontSize = 4;
-                _timeMesh.color = Color.white;
-                _timeMesh.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 0);
-                _timeMesh.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 0);
-
-                var image = ReflectionUtil.GetPrivateField<Image>(
-                    Resources.FindObjectsOfTypeAll<ScoreMultiplierUIController>().First(), "_multiplierProgressImage");
-
-                GameObject g = new GameObject();
-                Canvas canvas = g.AddComponent<Canvas>();
-                canvas.renderMode = RenderMode.WorldSpace;
-                CanvasScaler cs = g.AddComponent<CanvasScaler>();
-                cs.scaleFactor = 10f;
-                cs.dynamicPixelsPerUnit = 10f;
-                GraphicRaycaster gr = g.AddComponent<GraphicRaycaster>();
-                g.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 1f);
-                g.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 1f);
-
-                GameObject g2 = new GameObject();
-                _image = g2.AddComponent<Image>();
-                g2.transform.parent = g.transform;
-                g2.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 0.5f);
-                g2.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 0.5f);
-                g2.transform.localScale = new Vector3(2.3f, 2.3f, 2.3f);
-
-                _image.sprite = image.sprite;
-                _image.type = Image.Type.Filled;
-                _image.fillMethod = Image.FillMethod.Radial360;
-                _image.fillOrigin = (int)Image.Origin360.Top;
-                _image.fillClockwise = true;
-
-
-                GameObject g3 = new GameObject();
-                var bg = g3.AddComponent<Image>();
-                g3.transform.parent = g.transform;
-                g3.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 0.5f);
-                g3.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 0.5f);
-                g3.transform.localScale = new Vector3(2.3f, 2.3f, 2.3f);
-
-                bg.sprite = image.sprite;
-                bg.CrossFadeAlpha(0.05f, 1f, false);
-
-                g.GetComponent<RectTransform>().SetParent(TextHelper.CounterCanvas.transform, false);
-                g.transform.localScale = Vector3.one * 10f;
-                g.transform.localPosition = _timeMesh.transform.localPosition;
-                _image.fillAmount = (settings.ProgressTimeLeft && settings.IncludeRing) ? 1 : 0;
-            }else if (settings.Mode == ICounterMode.Percent)
-            {
-                TextHelper.CreateText(out _timeMesh, position);
-                _timeMesh.text = settings.ProgressTimeLeft ? "100%" : "0.00%";
-                _timeMesh.fontSize = 4;
-                _timeMesh.color = Color.white;
-                _timeMesh.alignment = TextAlignmentOptions.Center;
+                GameObject baseGameProgress = SongProgressPanelGO(ref coreGameHUD);
+                UnityEngine.Object.Destroy(baseGameProgress); // I'm sorry, little one.
             }
-            transform.position = position;
-            if (GameObject.Find("SongProgressCanvas") != null && settings.Mode != ICounterMode.BaseGame)
-                Destroy(GameObject.Find("SongProgressCanvas"));
-            StartCoroutine(SecondTick());
-        }
 
-        IEnumerator SecondTick()
-        {
-            while (true)
+            if (Settings.Mode != ProgressMode.Percent)
             {
-                yield return new WaitForSecondsRealtime(1);
-                t = _audioTimeSync.songTime;
-                var time = t;
-                if (useTimeLeft) time = length - t;
-                if (time <= 0f) yield return null;
-                if (settings.Mode == ICounterMode.Original)
+                var canvas = CanvasUtility.GetCanvasFromID(Settings.CanvasID);
+                if (canvas != null)
                 {
-                    _timeMesh.text = $"{Math.Floor(time / 60):N0}:{Math.Floor(time % 60):00}";
-                    if (settings.IncludeRing)
-                        _image.fillAmount = (useTimeLeft ? 1 : 0) - _audioTimeSync.songTime / length * (useTimeLeft ? 1 : -1);
-                    else
-                        _image.fillAmount = _audioTimeSync.songTime / length;
+                    Image backgroundImage = CreateRing(canvas).GetComponent<Image>();
+                    backgroundImage.rectTransform.anchoredPosition = timeText.rectTransform.anchoredPosition;
+                    backgroundImage.CrossFadeAlpha(0.05f, 1f, false);
+                    backgroundImage.transform.localScale = ringSize / 10;
+                    backgroundImage.type = Image.Type.Simple;
+
+                    progressRing = CreateRing(canvas).GetComponent<Image>();
+                    progressRing.rectTransform.anchoredPosition = timeText.rectTransform.anchoredPosition;
+                    progressRing.transform.localScale = ringSize / 10;
                 }
-                else if (settings.Mode == ICounterMode.Percent)
-                    _timeMesh.text = $"{((time / length) * 100).ToString("00")}%";
             }
+        }
+
+        public void Tick()
+        {
+            var time = atsc.songTime;
+            if (Settings.ProgressTimeLeft) time = length - time;
+            if (time <= 0f) return;
+            if (Settings.Mode == ProgressMode.Original || Settings.Mode == ProgressMode.TimeInBeats)
+            {
+                if (Settings.Mode == ProgressMode.TimeInBeats)
+                {
+                    float beats = Mathf.Round(songBPM / 60 * time / 0.25f) * 0.25f;
+                    timeText.text = beats.ToString("F2");
+                }
+                else
+                {
+                    timeText.text = $"{Math.Floor(time / 60):N0}:{Math.Floor(time % 60):00}";
+                }
+                if (Settings.IncludeRing)
+                {
+                    progressRing.fillAmount = time / length;
+                }
+                else
+                {
+                    progressRing.fillAmount = atsc.songTime / length;
+                }
+            }
+            else
+            {
+                timeText.text = $"{time / length * 100:00}%";
+            }
+        }
+
+        private Image CreateRing(Canvas canvas)
+        {
+            // Unfortunately, there is no garauntee that I have the CoreGameHUDController, since No Text and Huds
+            // completely disables it from spawning. So, to be safe, we recreate this all from scratch.
+            Image newImage = new GameObject("Ring Image", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+            newImage.sprite = Resources.FindObjectsOfTypeAll<Sprite>().FirstOrDefault(x => x.name == multiplierImageSpriteName);
+            newImage.transform.SetParent(canvas.transform, false);
+            newImage.type = Image.Type.Filled;
+            newImage.fillClockwise = true;
+            newImage.fillOrigin = 2;
+            newImage.fillMethod = Image.FillMethod.Radial360;
+            return newImage;
         }
     }
 }

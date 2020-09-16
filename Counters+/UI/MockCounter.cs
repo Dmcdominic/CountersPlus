@@ -1,255 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-using CountersPlus.Config;
+﻿using CountersPlus.ConfigModels;
 using CountersPlus.Custom;
+using CountersPlus.Utils;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using Zenject;
 
 namespace CountersPlus.UI
 {
-    /// <summary>
-    /// A Mock Counter to be used in the Counters+ UI menu, used for real time editing.
-    /// It has no function, it is just to display data that an actual Counter would represent.
-    /// </summary>
     public class MockCounter
     {
+        private Dictionary<ConfigModel, TMP_Text> activeMockCounters = new Dictionary<ConfigModel, TMP_Text>();
 
-        public static Dictionary<MockCounterGroup, ConfigModel> loadedMockCounters = new Dictionary<MockCounterGroup, ConfigModel>();
-        private static readonly MockCounterInfo info = new MockCounterInfo();
-        public static string HighlightedObject { get; private set; } = null;
+        [Inject] private CanvasUtility canvasUtility;
 
-        #region MockCounter Creation
-        public static void Create<T>(T settings, string counterName, string counterData) where T : ConfigModel
+        private ConfigModel highlightedConfig = null;
+
+        public void UpdateMockCounter(ConfigModel settings)
         {
+            if (activeMockCounters.TryGetValue(settings, out TMP_Text old))
+            {
+                if (old != null)
+                {
+                    Object.Destroy(old.gameObject);
+                }
+                activeMockCounters.Remove(settings);
+            }
+
             if (!settings.Enabled) return;
-            GameObject counter = new GameObject($"Counters+ | Mock {counterName} Counter");
-            GameObject nameGO = new GameObject($"Counters+ | Mock {counterName} Label");
-            Vector3 position = (CountersController.DeterminePosition(counter, settings.Position, settings.Distance) - new Vector3(0, 0.4f, 0));
-            nameGO.transform.parent = counter.transform;
-            TextHelper.CreateText(out TMP_Text name, position);
-            name.text = counterName;
-            name.fontSize = 3;
-            name.color = Color.white;
-            name.alignment = TextAlignmentOptions.Center;
 
-            TextHelper.CreateText(out TMP_Text data, position - new Vector3(0, 0.4f, 0));
-            data.text = counterData;
-            data.fontSize = 4;
-            data.color = Color.white;
-            data.alignment = TextAlignmentOptions.Center;
-            
-            if (loadedMockCounters.Where((KeyValuePair <MockCounterGroup, ConfigModel> x) => x.Value == settings).Any())
+            TMP_Text @new = canvasUtility.CreateTextFromSettings(settings);
+            @new.text = (settings is CustomConfigModel custom) ? custom.AttachedCustomCounter.Name : settings.DisplayName;
+            @new.color = highlightedConfig == settings ? Color.yellow : Color.white;
+            activeMockCounters.Add(settings, @new);
+        }
+
+        public void HighlightCounter(ConfigModel settings)
+        {
+            if (highlightedConfig != null && activeMockCounters.TryGetValue(highlightedConfig, out TMP_Text old))
             {
-                MockCounterGroup group = loadedMockCounters.First((KeyValuePair<MockCounterGroup, ConfigModel> x) => x.Value == settings).Key;
-                UnityEngine.Object.Destroy(group.CounterName);
-                UnityEngine.Object.Destroy(group.CounterData);
-                loadedMockCounters.Remove(group);
+                old.color = Color.white;
             }
-            if (settings.DisplayName == HighlightedObject) name.color = data.color = Color.yellow;
-            loadedMockCounters.Add(new MockCounterGroup(name, data, false), settings);
-        }
-
-        public static void CreateStatic(string counterName, string counterData)
-        {
-            GameObject counter = new GameObject($"Counters+ | Static {counterName} Counter");
-            GameObject nameGO = new GameObject($"Counters+ | Static {counterName} Label");
-            Vector3 position = Vector3.zero;
-            if (counterName == "Combo")
-                position = new Vector3(-3.2f, 1.25f, 7);
-            else if (counterName == "Multiplier")
-                position = new Vector3(3.2f, 1.25f, 7);
-            else if (counterName == "123 456")
-                position = new Vector3(-3.2f, 0.35f, 7);
-            nameGO.transform.parent = counter.transform;
-            //TextMeshPro name = nameGO.AddComponent<TextMeshPro>();
-            TextHelper.CreateText(out TMP_Text name, position);
-            name.text = counterName;
-            name.fontSize = 3;
-            name.color = Color.white;
-            name.alignment = TextAlignmentOptions.Center;
-
-            //TextMeshPro data = counter.AddComponent<TextMeshPro>();
-            TextHelper.CreateText(out TMP_Text data, position - new Vector3(0, 0.4f, 0));
-            data.text = counterData;
-            data.fontSize = 4;
-            data.color = Color.white;
-            data.alignment = TextAlignmentOptions.Center;
-
-            name.color = new Color(0.35f, 0.35f, 0.35f);
-            data.color = new Color(0.35f, 0.35f, 0.35f);
-            loadedMockCounters.Add(new MockCounterGroup(name, data, true), null as ConfigModel);
-        }
-        #endregion
-
-        #region MockCounter Editing
-        public static void Update<T>(T settings) where T : ConfigModel
-        {
-            if (settings is null) return;
-
-            if (!settings.Enabled)
+            highlightedConfig = settings;
+            if (activeMockCounters.TryGetValue(settings, out TMP_Text highlighted))
             {
-                if (loadedMockCounters.Where((KeyValuePair<MockCounterGroup, ConfigModel> x) => x.Value == settings).Any())
-                {
-                    MockCounterGroup group = loadedMockCounters.First((KeyValuePair<MockCounterGroup, ConfigModel> x) => x.Value == settings).Key;
-                    UnityEngine.Object.Destroy(group.CounterName);
-                    UnityEngine.Object.Destroy(group.CounterData);
-                    loadedMockCounters.Remove(group);
-                }
+                highlighted.color = Color.yellow;
             }
-
-            /*Mock Counter creation is here instead of CountersPlusSettingsFlowCoordinator.
-            Holy shit this code is messy, I'm not proud of it.
-            
-            If you want your new Counters+ option to be visible in the Settings UI, go ahead and throw it somewhere in here.
-            If you want to add your new Counter to the Settings UI, like copy MissedConfigModel's mock counter code and use it as a base.
-            Until I rewrite this, god help you.
-             */
-            if (CountersController.settings.AdvancedCounterInfo)
-            {
-                if (settings is MissedConfigModel)
-                    Create(settings, "Misses", info.notesMissed.ToString());
-                else if (settings is NoteConfigModel)
-                    Create(settings, "Notes",
-                                $"{info.notesCut - info.notesMissed} / {info.notesCut} {(((settings as NoteConfigModel).ShowPercentage) ? $"- ({Math.Round((((double)(info.notesCut - info.notesMissed) / info.notesCut) * 100), (settings as NoteConfigModel).DecimalPrecision)}%)" : "")}");
-                else if (settings is ScoreConfigModel)
-                {
-                    if ((settings as ScoreConfigModel).Mode == ICounterMode.BaseWithOutPoints || (settings as ScoreConfigModel).Mode == ICounterMode.LeavePoints || !(settings as ScoreConfigModel).Enabled)
-                        CreateStatic("123 456", "");
-                    else UnityEngine.Object.Destroy(GameObject.Find("Counters+ | Static 123 456 Counter"));
-                    Create(settings, $"<size=50%>{(settings as ScoreConfigModel).Mode}</size> {Math.Round(info.score, (settings as ScoreConfigModel).DecimalPrecision).ToString()}%", (settings as ScoreConfigModel).DisplayRank ? info.GetRank() : "");
-                }
-                else if (settings is SpeedConfigModel)
-                {
-                    if ((settings as SpeedConfigModel).Mode == ICounterMode.Average || (settings as SpeedConfigModel).Mode == ICounterMode.Both)
-                        Create(settings,
-                                $"{((settings as SpeedConfigModel).Mode == ICounterMode.Both ? "Average (Both)" : "Average Speed")}", $"{Math.Round((info.leftSpeedAverage + info.rightSpeedAverage) / 2, (settings as SpeedConfigModel).DecimalPrecision)}");
-                    else if ((settings as SpeedConfigModel).Mode == ICounterMode.SplitAverage || (settings as SpeedConfigModel).Mode == ICounterMode.SplitBoth)
-                        Create(settings,
-                                $"{((settings as SpeedConfigModel).Mode == ICounterMode.SplitBoth ? "Split Average (Both)" : "Split Average")}", $"{Math.Round(info.leftSpeedAverage, (settings as SpeedConfigModel).DecimalPrecision)} | {Math.Round(info.rightSpeedAverage, (settings as SpeedConfigModel).DecimalPrecision)}");
-                    else if ((settings as SpeedConfigModel).Mode == ICounterMode.Top5Sec)
-                        Create(settings, "Top Speed (5 Sec.)", $"{Math.Round(info.leftSpeedAverage + 10, (settings as SpeedConfigModel).DecimalPrecision)}");
-                }
-                else if (settings is CutConfigModel)
-                {
-                    if ((settings as CutConfigModel).SeparateSaberCounts)
-                        Create(settings, "Average Cut", $"{Mathf.RoundToInt(info.averageCutScore) - 10}  {Mathf.RoundToInt(info.averageCutScore)}");
-                    else
-                        Create(settings, "Average Cut", $"{Mathf.RoundToInt(info.averageCutScore)}");
-                }
-                else if (settings is ProgressConfigModel)
-                    Create(settings,
-                                $"{(settings as ProgressConfigModel).Mode.ToString()} Progress",
-                                    $"{(((((settings as ProgressConfigModel).ProgressTimeLeft ? 1f : 0f) - ((float)info.timeElapsed / info.totalTime)) * 100f) * ((settings as ProgressConfigModel).ProgressTimeLeft ? 1f : -1f)).ToString("00")}%");
-                else if (settings is SpinometerConfigModel)
-                    Create(settings, "Spinometer",
-                                $"{((settings as SpinometerConfigModel).Mode == ICounterMode.SplitAverage ? $"{info.leftSpinAverage} | {info.rightSpinAverage}" : $"{(info.leftSpinAverage + info.rightSpinAverage) / 2}")}");
-                else if (settings is PBConfigModel)
-                    Create(settings, "", $"PB: {Math.Round((info.score / (info.score + UnityEngine.Random.Range(0.05f, 0.25f))) * 100, 2)}%");
-                else if (settings is NotesLeftConfigModel)
-                    Create(settings, $"Notes Remaining: {UnityEngine.Random.Range((int)15, 50)}", "");
-                else if (settings is FailConfigModel) Create(settings, $"Fails", $"{info.GetRandomInsult()}");
-            }
-            else //Reduces calls to config. However with the new system I'm not sure if it matters all that much anymore.
-            {
-                if (settings is MissedConfigModel) Create(settings, "Missed", "0");
-                else if (settings is NoteConfigModel) Create(settings, "Notes", "0 / 0");
-                else if (settings is ScoreConfigModel) Create(settings, "100%", "SSS");
-                else if (settings is SpeedConfigModel) Create(settings, "Average Speed", "0");
-                else if (settings is CutConfigModel) Create(settings, "Average Cut", "0");
-                else if (settings is ProgressConfigModel) Create(settings, "Progress", "0%");
-                else if (settings is SpinometerConfigModel) Create(settings, "Spinometer", "0");
-                else if (settings is PBConfigModel) Create(settings, "", "PB: 0%");
-                else if (settings is NotesLeftConfigModel) Create(settings, "", "Notes Left");
-                else if (settings is FailConfigModel) Create(settings, "Fails", "A lot");
-            }
-            if (settings is CustomConfigModel) Create(settings, "", settings.DisplayName);
-        }
-
-        public static void Highlight<T>(T settings) where T : ConfigModel
-        {
-            if (settings != null)
-            {
-                foreach (KeyValuePair<MockCounterGroup, ConfigModel> kvp in loadedMockCounters)
-                {
-                    if (kvp.Value is null) continue;
-                    if (settings.DisplayName == kvp.Value.DisplayName) HighlightedObject = settings.DisplayName;
-                    kvp.Key.CounterName.color = (settings.DisplayName == kvp.Value.DisplayName) ? Color.yellow : Color.white;
-                    kvp.Key.CounterData.color = (settings.DisplayName == kvp.Value.DisplayName) ? Color.yellow : Color.white;
-                }
-            }
-            else
-            {
-                HighlightedObject = null;
-                //Welcome to Python.
-                foreach (KeyValuePair<MockCounterGroup, ConfigModel> kvp in loadedMockCounters)
-                    if (!kvp.Key.IsStatic)
-                        kvp.Key.CounterName.color = kvp.Key.CounterData.color = Color.white;
-            }
-        }
-        #endregion
-    }
-
-    /// <summary>
-    /// MockCounterInfo is used to create random statistics for Mock Counters to display while in the Counters+ UI menu.
-    /// </summary>
-    public class MockCounterInfo
-    {
-        public int notesCut;
-        public int notesMissed;
-        public int totalTime;
-        public int timeElapsed;
-        public float score;
-        public float leftSpeedAverage;
-        public float rightSpeedAverage;
-        public float averageCutScore;
-        public float leftSpinAverage;
-        public float rightSpinAverage;
-
-        private readonly string[] failInsults = new string[] { "A lot", "Embarrasing large", "Still a lot", "MonkaS", "One, two, skip a few...", "99999", "Yikes!", "Zoinks!", "Uhhh..." };
-
-        public MockCounterInfo()
-        {
-            notesCut = UnityEngine.Random.Range(100, 250);
-            notesMissed = UnityEngine.Random.Range(0, 15);
-            totalTime = UnityEngine.Random.Range(75, 185);
-            timeElapsed = UnityEngine.Random.Range(35, totalTime);
-            score = UnityEngine.Random.Range(0.65f, 0.95f) * 100;
-            leftSpeedAverage = UnityEngine.Random.Range(30, 85);
-            rightSpeedAverage = UnityEngine.Random.Range(30, 85);
-            averageCutScore = UnityEngine.Random.Range(85, 105);
-            leftSpinAverage = UnityEngine.Random.Range(1000, 2500);
-            rightSpinAverage = UnityEngine.Random.Range(1000, 2500);
-        }
-
-        public string GetRank()
-        {
-            float prec = score / 100;
-            if (prec > 0.9f) return "SS";
-            if (prec > 0.8f) return "S";
-            return "A";
-        }
-
-        public string GetRandomInsult()
-        {
-            return failInsults[UnityEngine.Random.Range((int)0, failInsults.Count())];
-        }
-    }
-
-    public class MockCounterGroup
-    {
-        public bool IsStatic { get; private set; }
-        public TMP_Text CounterName;
-        public TMP_Text CounterData;
-
-        public MockCounterGroup(TMP_Text name, TMP_Text data, bool isStatic)
-        {
-            CounterName = name;
-            CounterData = data;
-            IsStatic = isStatic;
         }
     }
 }

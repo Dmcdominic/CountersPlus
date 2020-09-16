@@ -1,16 +1,14 @@
-﻿using System;
-using UnityEngine;
-using TMPro;
-using CountersPlus.Config;
+﻿using CountersPlus.ConfigModels;
+using CountersPlus.Counters.Interfaces;
 using System.Collections.Generic;
+using System.Globalization;
+using TMPro;
+using UnityEngine;
 
 namespace CountersPlus.Counters
 {
-    public class CutCounter : Counter<CutConfigModel>
+    internal class CutCounter : Counter<CutConfigModel>, INoteEventHandler
     {
-        private TMP_Text cutLabel;
-        private BeatmapObjectManager beatmapObjectManager;
-        private GameObject _RankObject;
         private TMP_Text cutCounterLeft;
         private TMP_Text cutCounterRight;
         private int totalCutCountLeft = 0;
@@ -18,62 +16,50 @@ namespace CountersPlus.Counters
         private int[] totalScoresLeft = new int[] { 0, 0, 0 }; // [0]=beforeCut, [1]=afterCut, [2]=cutDistance
         private int[] totalScoresRight = new int[] { 0, 0, 0 };
 
+        // For handling cut calculations
         private Dictionary<SaberSwingRatingCounter, NoteCutInfo> noteCutInfos = new Dictionary<SaberSwingRatingCounter, NoteCutInfo>();
 
-        internal override void Counter_Start() { }
-
-        internal override void Init(CountersData data, Vector3 position)
+        public override void CounterInit()
         {
-            beatmapObjectManager = data.BOM;
-            TextHelper.CreateText(out cutLabel, position);
-            cutLabel.text = "Average Cut";
-            cutLabel.fontSize = 3;
-            cutLabel.color = Color.white;
-            cutLabel.alignment = TextAlignmentOptions.Center;
+            string defaultValue = FormatLabel(0, 0, Settings.AveragePrecision);
 
-            _RankObject = new GameObject("Counters+ | Cut Label");
-            _RankObject.transform.parent = transform;
-            TextHelper.CreateText(out cutCounterLeft, position - new Vector3(0, settings.SeparateCutValues ? 0.9f : 0.4f, 0));
-            cutCounterLeft.fontSize = 4;
-            cutCounterLeft.color = Color.white;
-            cutCounterLeft.lineSpacing = -26;
-            cutCounterLeft.text = settings.SeparateCutValues ? "0\n0\n0" : "0";
-            cutCounterLeft.alignment = TextAlignmentOptions.Center;
+            var label = CanvasUtility.CreateTextFromSettings(Settings);
+            label.text = "Average Cut";
+            label.fontSize = 3;
 
-            if (settings.SeparateSaberCounts)
+            Vector3 leftOffset = Vector3.up * -0.2f;
+            TextAlignmentOptions leftAlign = TextAlignmentOptions.Top;
+            if (Settings.SeparateSaberCounts)
             {
-                TextHelper.CreateText(out cutCounterRight, position - new Vector3(-0.2f, settings.SeparateCutValues ? 0.9f : 0.4f, 0));
-                cutCounterRight.fontSize = 4;
-                cutCounterRight.color = Color.white;
+                cutCounterRight = CanvasUtility.CreateTextFromSettings(Settings, new Vector3(0.2f, -0.2f, 0));
                 cutCounterRight.lineSpacing = -26;
-                cutCounterRight.text = settings.SeparateCutValues ? "0\n0\n0" : "0";
-                cutCounterRight.alignment = TextAlignmentOptions.Left;
+                cutCounterRight.text = Settings.SeparateCutValues ? $"{defaultValue}\n{defaultValue}\n{defaultValue}" : $"{defaultValue}";
+                cutCounterRight.alignment = TextAlignmentOptions.TopLeft;
 
-                cutCounterLeft.alignment = TextAlignmentOptions.Right;
-                cutCounterLeft.transform.localPosition = position - new Vector3(0.2f, settings.SeparateCutValues ? 0.9f : 0.4f, 0);
+                leftOffset = new Vector3(-0.2f, -0.2f, 0);
+                leftAlign = TextAlignmentOptions.TopRight;
             }
 
-            if (beatmapObjectManager != null)
-                beatmapObjectManager.noteWasCutEvent += UpdateScore;
+            cutCounterLeft = CanvasUtility.CreateTextFromSettings(Settings, leftOffset);
+            cutCounterLeft.lineSpacing = -26;
+            cutCounterLeft.text = Settings.SeparateCutValues ? $"{defaultValue}\n{defaultValue}\n{defaultValue}" : $"{defaultValue}";
+            cutCounterLeft.alignment = leftAlign;
         }
 
-        internal override void Counter_Destroy()
+        public void OnNoteCut(NoteData data, NoteCutInfo info)
         {
-            beatmapObjectManager.noteWasCutEvent -= UpdateScore;
-        }
-
-        private void UpdateScore(INoteController data, NoteCutInfo info)
-        {
-            if (data.noteData.noteType == NoteType.Bomb || !info.allIsOK) return;
+            if (data.noteType == NoteType.Bomb || !info.allIsOK) return;
             noteCutInfos.Add(info.swingRatingCounter, info);
             info.swingRatingCounter.didFinishEvent -= SaberSwingRatingCounter_didFinishEvent;
             info.swingRatingCounter.didFinishEvent += SaberSwingRatingCounter_didFinishEvent;
         }
 
+        public void OnNoteMiss(NoteData data) { }
+
         private void SaberSwingRatingCounter_didFinishEvent(SaberSwingRatingCounter v)
         {
             ScoreModel.RawScoreWithoutMultiplier(noteCutInfos[v], out int beforeCut, out int afterCut, out int cutDistance);
-            //"cutDistanceRawScore" is already calculated into "beforeCutRawScore"
+
             if (noteCutInfos[v].saberType == SaberType.SaberA)
             {
                 totalScoresLeft[0] += beforeCut;
@@ -96,46 +82,62 @@ namespace CountersPlus.Counters
 
         private void UpdateLabels()
         {
-            double[] leftAverages = new double[3]
-            {
-                SafeDivideScore(totalScoresLeft[0], totalCutCountLeft),
-                SafeDivideScore(totalScoresLeft[1], totalCutCountLeft),
-                SafeDivideScore(totalScoresLeft[2], totalCutCountLeft)
-            };
+            int shownDecimals = Settings.AveragePrecision;
 
-            double[] rightAverages = new double[3]
+            if (Settings.SeparateCutValues && Settings.SeparateSaberCounts) // Before/After/Distance, for both sabers
             {
-                SafeDivideScore(totalScoresRight[0], (totalCutCountRight)),
-                SafeDivideScore(totalScoresRight[1], (totalCutCountRight)),
-                SafeDivideScore(totalScoresRight[2], (totalCutCountRight))
-            };
-
-            if (settings.SeparateCutValues && settings.SeparateSaberCounts)
-            {
+                string[] leftAverages = new string[3]
+                {
+                    FormatLabel(totalScoresLeft[0], totalCutCountLeft, shownDecimals),
+                    FormatLabel(totalScoresLeft[1], totalCutCountLeft, shownDecimals),
+                    FormatLabel(totalScoresLeft[2], totalCutCountLeft, shownDecimals)
+                };
+                string[] rightAverages = new string[3]
+                {
+                    FormatLabel(totalScoresRight[0], totalCutCountRight, shownDecimals),
+                    FormatLabel(totalScoresRight[1], totalCutCountRight, shownDecimals),
+                    FormatLabel(totalScoresRight[2], totalCutCountRight, shownDecimals)
+                };
                 cutCounterLeft.text = $"{leftAverages[0]}\n{leftAverages[1]}\n{leftAverages[2]}";
                 cutCounterRight.text = $"{rightAverages[0]}\n{rightAverages[1]}\n{rightAverages[2]}";
             }
-            else if (settings.SeparateCutValues)
+            else if (Settings.SeparateCutValues) // Before/After/Distance, for combined sabers
             {
-                cutCounterLeft.text = $"{(leftAverages[0] + rightAverages[0]) / 2}\n{(leftAverages[1] + rightAverages[1]) / 2}\n{(leftAverages[2] + rightAverages[2]) / 2}";
+                int totalCutCount = totalCutCountLeft + totalCutCountRight;
+                string[] cutValueAverages = new string[3]
+                {
+                    FormatLabel(totalScoresLeft[0] + totalScoresRight[0], totalCutCount, shownDecimals),
+                    FormatLabel(totalScoresLeft[1] + totalScoresRight[1], totalCutCount, shownDecimals),
+                    FormatLabel(totalScoresLeft[2] + totalScoresRight[2], totalCutCount, shownDecimals)
+                };
+                cutCounterLeft.text = $"{cutValueAverages[0]}\n{cutValueAverages[1]}\n{cutValueAverages[2]}";
             }
-            else if (settings.SeparateSaberCounts)
+            else if (Settings.SeparateSaberCounts) // Combined cut, for separate sabers
             {
-                cutCounterLeft.text = $"{leftAverages[0] + leftAverages[1] + leftAverages[2]}";
-                cutCounterRight.text = $"{rightAverages[0] + rightAverages[1] + rightAverages[2]}";
+                string[] saberAverages = new string[2]
+                {
+                    FormatLabel(totalScoresLeft[0] + totalScoresLeft[1] + totalScoresLeft[2], totalCutCountLeft, shownDecimals),
+                    FormatLabel(totalScoresRight[0] + totalScoresRight[1] + totalScoresRight[2], totalCutCountRight, shownDecimals)
+                };
+                cutCounterLeft.text = $"{saberAverages[0]}";
+                cutCounterRight.text = $"{saberAverages[1]}";
             }
-            else
+            else // Combined cut, for combined sabers
             {
-                // Divide combined left and right score by 2 only if both sabers have cut something.
-                int divisor = (totalCutCountRight * totalCutCountLeft == 0 ? 1 : 2);
-                cutCounterLeft.text = $"{(leftAverages[0] + leftAverages[1] + leftAverages[2] + rightAverages[0] + rightAverages[1] + rightAverages[2]) / divisor}";
+                string averages = FormatLabel(totalScoresLeft[0] + totalScoresLeft[1] + totalScoresLeft[2] + totalScoresRight[0] + totalScoresRight[1] + totalScoresRight[2], totalCutCountLeft + totalCutCountRight, shownDecimals);
+                cutCounterLeft.text = $"{averages}";
             }
         }
 
         private double SafeDivideScore(int total, int count)
         {
-            double result = Math.Round(((double)(total)) / (count));
-            return Double.IsNaN(result) ? 0 : result;
+            double result = (double)total / count;
+            return double.IsNaN(result) ? 0 : result;
+        }
+
+        private string FormatLabel(int totalScore, int totalCuts, int decimals)
+        {
+            return SafeDivideScore(totalScore, totalCuts).ToString($"F{decimals}", CultureInfo.InvariantCulture);
         }
     }
 }
