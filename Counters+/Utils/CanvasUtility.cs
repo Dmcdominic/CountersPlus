@@ -265,6 +265,7 @@ namespace CountersPlus.Utils
             GameObject gameObject = coreGameHUD.GetComponentInChildren<T>().gameObject;
             if (gameObject != null && gameObject.activeInHierarchy)
                 RecurseFunctionOverGameObjectTree(gameObject, (child) => child.SetActive(false));
+            gameObject.SetActive(false);
         }
 
         private void RecurseFunctionOverGameObjectTree(GameObject go, System.Action<GameObject> func)

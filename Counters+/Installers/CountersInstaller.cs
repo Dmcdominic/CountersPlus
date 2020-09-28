@@ -118,7 +118,7 @@ namespace CountersPlus.Installers
 
             if (counterType.BaseType == typeof(MonoBehaviour))
             {
-                Container.BindInterfacesAndSelfTo(counterType).FromComponentOnRoot().NonLazy();
+                Container.BindInterfacesAndSelfTo(counterType).FromNewComponentOnRoot().NonLazy();
             }
             else
             {
