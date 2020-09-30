@@ -1,11 +1,11 @@
 ﻿using System;
 using UnityEngine;
 using TMPro;
-using CountersPlus.Config;
+/*using CountersPlus.Config;*/
 
 namespace CountersPlus.Counters
 {
-    class InhibitoryCounter : Counter<InhibitoryConfigModel>
+    /*class InhibitoryCounter : Counter<InhibitoryConfigModel>
     {
 
         private ScoreController scoreController;
@@ -73,5 +73,5 @@ namespace CountersPlus.Counters
             inhibitedText.text = counter.ToString() + " / " + total.ToString();
             if (settings.ShowPercentage) inhibitedText.text += string.Format(" - ({0}%)", Math.Round(((float)counter / (float)total) * 100, settings.DecimalPrecision));
         }
-    }
+    }*/
 }

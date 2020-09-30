@@ -21,7 +21,7 @@ namespace CountersPlus
 
         [Init]
         public Plugin(IPALogger logger,
-            [Config.Name("CountersPlus")] Config conf)
+            [IPA.Config.Config.Name("CountersPlus")] IPA.Config.Config conf)
         {
             Instance = this;
             Logger = logger;

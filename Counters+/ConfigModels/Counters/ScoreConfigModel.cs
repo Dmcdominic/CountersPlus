@@ -26,25 +26,25 @@ namespace CountersPlus.ConfigModels
         public virtual bool DisplayRank { get; set; } = true;
         [UIValue(nameof(CustomRankColors))]
         public virtual bool CustomRankColors { get; set; } = true;
-        [UseConverter(typeof(HexColorConverter))]
+        /*[UseConverter(typeof(HexColorConverter))]*/
         [UIValue(nameof(SSColor))]
         public virtual Color SSColor { get; set; } = Color.cyan;
-        [UseConverter(typeof(HexColorConverter))]
+        /*[UseConverter(typeof(HexColorConverter))]*/
         [UIValue(nameof(SColor))]
         public virtual Color SColor { get; set; } = Color.white;
-        [UseConverter(typeof(HexColorConverter))]
+        /*[UseConverter(typeof(HexColorConverter))]*/
         [UIValue(nameof(AColor))]
         public virtual Color AColor { get; set; } = Color.green;
-        [UseConverter(typeof(HexColorConverter))]
+        /*[UseConverter(typeof(HexColorConverter))]*/
         [UIValue(nameof(BColor))]
         public virtual Color BColor { get; set; } = Color.yellow;
-        [UseConverter(typeof(HexColorConverter))]
+        /*[UseConverter(typeof(HexColorConverter))]*/
         [UIValue(nameof(CColor))]
         public virtual Color CColor { get; set; } = new Color(1, 0.5f, 0);
-        [UseConverter(typeof(HexColorConverter))]
+        /*[UseConverter(typeof(HexColorConverter))]*/
         [UIValue(nameof(DColor))]
         public virtual Color DColor { get; set; } = Color.red;
-        [UseConverter(typeof(HexColorConverter))]
+        /*[UseConverter(typeof(HexColorConverter))]*/
         [UIValue(nameof(EColor))]
         public virtual Color EColor { get; set; } = Color.red;
 
